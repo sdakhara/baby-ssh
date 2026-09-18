@@ -1,0 +1,21 @@
+[package]
+name = "baby-ssh"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.104"
+chrono = { version = "0.4.45", features = ["serde"] }
+crossterm = { version = "0.28", features = ["event-stream"] }
+dirs = "7.0.0"
+futures-util = "0.3.34"
+keyring = { version = "4.2.0", default-features = false, features = ["windows-native-keyring-store", "apple-native-keyring-store", "zbus-secret-service-keyring-store", "v1"] }
+ratatui = { version = "0.30.2", default-features = false, features = ["crossterm_0_28"] }
+russh = "0.63.3"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+tokio = { version = "1.53.1", features = ["full"] }
+tracing = "0.1.44"
+tracing-appender = "0.2.5"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+uuid = { version = "1.26.1", features = ["v4", "serde"] }
