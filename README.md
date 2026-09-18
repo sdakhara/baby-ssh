@@ -3,9 +3,7 @@
 A lightweight, keyboard-driven terminal SSH client for Windows. Save connection profiles once,
 then connect with a single `Enter` — no more re-typing `ssh -i C:\Users\...\id_ed25519 -p 2222 user@host`.
 
-## Status: Phase 1 (Windows) complete
-
-Everything in the Phase 1 MVP checklist from the project spec is implemented:
+## Features
 
 - Create / edit / delete / search / favorite connection profiles
 - Password and private-key authentication (with or without a passphrase), detected automatically
@@ -16,17 +14,46 @@ Everything in the Phase 1 MVP checklist from the project spec is implemented:
 - Friendly error screens (with technical detail available) instead of raw error codes
 - File-based logging at `%APPDATA%\baby-ssh\logs\baby-ssh.log` that never logs secrets
 
-## Running it
+## Installation
+
+### Option 1: Download the release (recommended)
+
+1. Download the latest `baby-ssh-*-windows-x86_64.zip` from the
+   [Releases page](https://github.com/sdakhara/baby-ssh/releases).
+2. Unzip it anywhere.
+3. Run `baby-ssh.exe` directly — it's fully self-contained, no installer or extra dependencies.
+
+To be able to just type `baby-ssh` from any terminal, copy it somewhere permanent and add that
+folder to your PATH:
 
 ```powershell
-cargo run
+$installDir = "$env:LOCALAPPDATA\Programs\baby-ssh"
+New-Item -ItemType Directory -Force -Path $installDir | Out-Null
+Copy-Item ".\baby-ssh.exe" -Destination "$installDir\baby-ssh.exe" -Force
+
+$userPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+$parts = $userPath -split ';' | Where-Object { $_ -ne "" }
+if ($parts -notcontains $installDir) {
+    [Environment]::SetEnvironmentVariable("PATH", (($parts + $installDir) -join ';'), "User")
+}
 ```
 
-or build a binary and run it directly:
+Open a **new** terminal window afterward — PATH changes don't apply to already-open ones — then
+just run:
 
 ```powershell
-cargo build --release
-.\target\release\baby-ssh.exe
+baby-ssh
+```
+
+### Option 2: Build from source
+
+Requires the Rust toolchain ([rustup.rs](https://rustup.rs)).
+
+```powershell
+git clone https://github.com/sdakhara/baby-ssh.git
+cd baby-ssh
+cargo run                    # run it directly, for development
+cargo build --release        # or produce .\target\release\baby-ssh.exe
 ```
 
 ## Keyboard controls
@@ -66,9 +93,6 @@ and `baby-ssh:passphrase` services, keyed by the connection's id — never in th
 
 ## Architecture
 
-The codebase follows the layered design from the spec, so Linux/macOS support later is a matter
-of adding platform code, not a rewrite:
-
 ```
 src/
 ├── app/          Application state machine, commands, validation
@@ -79,18 +103,12 @@ src/
 └── models/       Connection and settings data types
 ```
 
-One deliberate deviation from the spec's suggested file layout: `credentials/windows.rs` /
-`linux.rs` / `macos.rs` were not created as separate files, because the `keyring` crate already
-does that OS dispatch internally — those files would have been empty pass-throughs. If Phase 2
-needs platform-specific credential behavior beyond what `keyring` offers, that's the place to add it.
+One deliberate deviation from the original spec's suggested file layout: there's no
+`credentials/windows.rs` / `linux.rs` / `macos.rs`, because the `keyring` crate already does that
+OS dispatch internally — those files would have been empty pass-throughs.
 
 ## Tech stack
 
 Rust, `ratatui` + `crossterm` for the TUI, `russh` for a pure-Rust SSH implementation (no OpenSSL
 dependency to manage on Windows), `keyring` for OS-backed credential storage, `serde`/`serde_json`
 for the on-disk profile format, and `tracing` for logging.
-
-## Not in Phase 1
-
-Per the spec's non-goals: no SFTP browser, no port forwarding, no jump hosts, no cloud sync, no
-SSH agent support, no cross-platform builds yet. These are Phase 2/3 candidates.
